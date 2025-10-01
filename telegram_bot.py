@@ -1,6 +1,7 @@
 import os
 import telebot
 import logging
+import re
 from telebot import types
 from telebot.handler_backends import State, StatesGroup
 from telebot.custom_filters import StateFilter
@@ -17,9 +18,15 @@ TG_BOT_APIKEY = os.getenv('TG_BOT_APIKEY')
 
 bot = telebot.TeleBot(TG_BOT_APIKEY)
 
+def escape_markdown(text):
+    """Экранирует специальные символы для MarkdownV2."""
+    escape_chars = r'_*[]()~`>#+-=|{}.!'
+    return re.sub(f'([{re.escape(escape_chars)}])', r'\\\1', text)
+
 ALLOWED_USERS = {
     112444633: "Дмитрий",
-    730289007: "Андрей"
+    730289007: "Андрей",
+    378606353: "Лилия"
 }
 
 def is_allowed(message):
@@ -99,17 +106,20 @@ def handle_search_text(message):
         for index, row in similar_issues.iterrows():
             issue_key = row['key']
             issue_link = f"https://tracker.yandex.ru/{issue_key}"
+            summary_escaped = escape_markdown(row['summary'])
             similarity_percent = f"{row['similarity']:.2%}"
-            response += f"[{issue_key}]({issue_link}) - {row['summary']} (Схожесть: {similarity_percent})\n"
+            response += f"[{escape_markdown(issue_key)}]({issue_link}) \\- {summary_escaped} \\(Схожесть: {escape_markdown(similarity_percent)}\\)\n"
     else:
-        response = "Похожих задач не найдено."
+        response = "Похожих задач не найдено\\."
         
-    bot.reply_to(message, response, parse_mode='Markdown')
+    bot.reply_to(message, response, parse_mode='MarkdownV2')
     update_time = get_cache_update_time()
     issues_count = get_issues_count_from_cache()
+    update_time = escape_markdown(get_cache_update_time())
+    issues_count = get_issues_count_from_cache()
     bot.send_message(message.chat.id,
-                     f"Можете отправить следующий запрос для поиска или вернуться в главное меню, нажав /start.\n"
-                     f"(БД актуальна на: {update_time}, Записей: {issues_count})")
+                     f"Можете отправить следующий запрос для поиска или вернуться в главное меню, нажав /start\\.\n"
+                     f"\\(БД актуальна на: {update_time}, Записей: {issues_count}\\)", parse_mode='MarkdownV2')
     bot.set_state(message.from_user.id, MyStates.search, message.chat.id)
 
 @bot.message_handler(state="*", func=lambda message: is_allowed(message) and message.text not in ['Поиск дублей', 'Обновить БД принудительно'])
