@@ -1,0 +1,16 @@
+# виртуальное окружение
+venv/
+.env
+.env.*
+.venv/
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE / system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
