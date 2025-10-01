@@ -2,3 +2,4 @@ python-dotenv
 yandex-tracker-client
 scikit-learn
 pandas
+pyTelegramBotAPI

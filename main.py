@@ -1,12 +1,27 @@
 import pandas as pd
 import sys
-from yandex_tracker import load_or_fetch_issues
-from similarity_checker import find_similar_issues
+from yandex_tracker import load_or_fetch_issues as load_issues
+from similarity_checker import find_similar_issues as find_issues
 
 
-def main():
+def find_similar_issues(summary, description, issues):
     """
-    Основная функция для поиска похожих задач.
+    Находит похожие задачи на основе предоставленных данных.
+
+    Args:
+        summary (str): Заголовок новой задачи.
+        description (str): Описание новой задачи.
+        issues (pd.DataFrame): DataFrame с существующими задачами.
+
+    Returns:
+        pd.DataFrame: DataFrame с похожими задачами.
+    """
+    return find_issues(summary, description, issues)
+
+
+def interactive_main():
+    """
+    Основная функция для интерактивного поиска похожих задач в командной строке.
     """
     # Конфигурация для корректного чтения ввода в PowerShell
     if sys.platform == "win32":
@@ -15,7 +30,7 @@ def main():
 
     print("Загрузка задач из Yandex.Tracker...")
     try:
-        issues_df = load_or_fetch_issues()
+        issues_df = load_issues()
         print("Задачи успешно загружены.")
     except Exception as e:
         print(f"Ошибка при загрузке задач: {e}")
@@ -67,7 +82,7 @@ def main():
 
 if __name__ == "__main__":
     try:
-        main()
+        interactive_main()
     except KeyboardInterrupt:
         print("\nПрограмма завершена пользователем.")
         sys.exit(0)
