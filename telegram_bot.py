@@ -19,13 +19,18 @@ def handle_text(message):
     summary = text_parts[0]
     description = text_parts[1] if len(text_parts) > 1 else ''
     
+    bot.reply_to(message, "Загружаю задачи из Yandex Tracker...")
     issues = load_issues()
+    #bot.reply_to(message, "Ищу похожие задачи...")
     similar_issues = find_similar_issues(summary, description, issues)
     
-    if similar_issues:
+    if not similar_issues.empty:
         response = "Найдены похожие задачи:\n\n"
-        for issue in similar_issues:
-            response += f"[{issue['key']}]({issue['link']}) - {issue['summary']}\n"
+        for index, row in similar_issues.iterrows():
+            issue_key = row['key']
+            issue_link = f"https://tracker.yandex.ru/{issue_key}"
+            similarity_percent = f"{row['similarity']:.2%}"
+            response += f"[{issue_key}]({issue_link}) - {row['summary']} (Схожесть: {similarity_percent})\n"
     else:
         response = "Похожих задач не найдено."
         
