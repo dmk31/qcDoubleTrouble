@@ -82,6 +82,16 @@ def load_or_fetch_issues(cache_file='issues.json', cache_hours=1):
     
     return issues_df
 
+def force_fetch_issues(cache_file='issues.json'):
+    """
+    Принудительно загружает свежие задачи и обновляет кэш.
+    """
+    print("Принудительная загрузка свежих задач...")
+    issues_df = get_issues()
+    issues_df.to_json(cache_file, orient='records', force_ascii=False, indent=4)
+    print(f"Кэш '{cache_file}' принудительно обновлен.")
+    return issues_df
+
 if __name__ == '__main__':
     # Пример использования:
     # При первом запуске данные будут загружены из API и сохранены в issues.json.
@@ -89,3 +99,24 @@ if __name__ == '__main__':
     issues = load_or_fetch_issues()
     print("\nПример полученных данных:")
     print(issues.head())
+
+def get_cache_update_time(cache_file='issues.json'):
+    """
+    Возвращает время последнего обновления кэша.
+    """
+    if os.path.exists(cache_file):
+        mod_time = datetime.fromtimestamp(os.path.getmtime(cache_file))
+        return mod_time.strftime('%Y-%m-%d %H:%M:%S')
+    return "Кэш еще не создан."
+
+def get_issues_count_from_cache(cache_file='issues.json'):
+    """
+    Возвращает количество задач в кэше.
+    """
+    if os.path.exists(cache_file):
+        try:
+            df = pd.read_json(cache_file)
+            return len(df)
+        except Exception:
+            return 0
+    return 0
