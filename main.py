@@ -54,7 +54,7 @@ def main():
                 results_df.rename(columns={
                     'key': 'Ключ',
                     'similarity': 'Схожесть',
-                    'found_in': 'Найдено в',
+                    'found_in': 'Найдено по',
                     'summary': 'Название'
                 }, inplace=True)
 

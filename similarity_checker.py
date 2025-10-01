@@ -40,7 +40,7 @@ def find_similar_issues(new_title: str, new_description: str, issues_df: pd.Data
             'key': issues_df.iloc[i]['key'],
             'summary': issues_df.iloc[i]['summary'],
             'similarity': similarity,
-            'found_in': 'summary'
+            'found_in': 'заголовку'
         })
         
     # 3. Поиск по Описаниям (description)
@@ -56,7 +56,7 @@ def find_similar_issues(new_title: str, new_description: str, issues_df: pd.Data
             'key': issues_df.iloc[i]['key'],
             'summary': issues_df.iloc[i]['summary'],
             'similarity': similarity,
-            'found_in': 'description'
+            'found_in': 'описанию'
         })
 
     # 4. Объединение и сортировка результатов
