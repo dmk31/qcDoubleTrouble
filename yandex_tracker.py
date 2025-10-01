@@ -1,0 +1,91 @@
+# yandex_tracker.py
+
+import os
+import json
+from datetime import datetime, timedelta
+import pandas as pd
+from dotenv import load_dotenv
+from yandex_tracker_client import TrackerClient
+
+# Загружаем переменные окружения из .env файла
+load_dotenv()
+
+# Получаем токен и ID организации из переменных окружения
+# В .env файле должны быть определены YANDEX_TRACKER_TOKEN и YA_TRACKER_ORG_ID
+TOKEN = os.getenv("YANDEX_TRACKER_TOKEN")
+ORG_ID = os.getenv("YA_TRACKER_ORG_ID")
+
+# Инициализация клиента Yandex Tracker
+if not TOKEN or not ORG_ID:
+    raise ValueError("Необходимо задать YANDEX_TRACKER_TOKEN и YA_TRACKER_ORG_ID в .env файле")
+
+client = TrackerClient(token=TOKEN, org_id=ORG_ID)
+
+def get_issues():
+    """
+    Выполняет запрос к API Yandex Tracker для получения задач.
+
+    Фильтр запроса жестко задан для получения задач из определенных очередей
+    и с определенными статусами.
+
+    Returns:
+        pd.DataFrame: DataFrame с задачами, содержащий поля 'key', 'summary' и 'description'.
+    """
+    # Фильтр для получения задач
+    query = (
+        "Queue: PLATFORM, PLATFORMCOMP, PLATFORMUI, PLATFORMBPMN, PLATFORMNSI "
+        "Status: inProgress, open, readyForTest, tested, testing, vozvrasena, needInfo"
+    )
+    
+    # Выполняем запрос к API
+    issues_from_tracker = client.issues.find(query=query)
+    
+    # Извлекаем только необходимые поля
+    issues_data = []
+    for issue in issues_from_tracker:
+        issues_data.append({
+            'key': issue.key,
+            'summary': issue.summary,
+            'description': issue.description or ''  # Присваиваем пустую строку, если описание отсутствует
+        })
+    
+    print(f"Загружено {len(issues_data)} задач из Yandex Tracker.")
+    
+    # Возвращаем данные в виде DataFrame
+    return pd.DataFrame(issues_data)
+
+def load_or_fetch_issues(cache_file='issues.json', cache_hours=1):
+    """
+    Загружает задачи из кэша или выполняет новый запрос, если кэш устарел.
+
+    Args:
+        cache_file (str): Путь к файлу кэша.
+        cache_hours (int): Время жизни кэша в часах.
+
+    Returns:
+        pd.DataFrame: DataFrame с актуальными задачами.
+    """
+    # Проверяем, существует ли файл кэша и актуален ли он
+    if os.path.exists(cache_file):
+        file_mod_time = datetime.fromtimestamp(os.path.getmtime(cache_file))
+        if datetime.now() - file_mod_time < timedelta(hours=cache_hours):
+            print(f"Загрузка задач из кэша '{cache_file}'.")
+            return pd.read_json(cache_file)
+
+    # Если кэш устарел или не существует, получаем свежие данные
+    print("Кэш не найден или устарел. Загрузка свежих задач...")
+    issues_df = get_issues()
+    
+    # Сохраняем свежие данные в кэш
+    issues_df.to_json(cache_file, orient='records', force_ascii=False, indent=4)
+    print(f"Задачи сохранены в кэш '{cache_file}'.")
+    
+    return issues_df
+
+if __name__ == '__main__':
+    # Пример использования:
+    # При первом запуске данные будут загружены из API и сохранены в issues.json.
+    # При последующих запусках в течение часа данные будут загружаться из файла.
+    issues = load_or_fetch_issues()
+    print("\nПример полученных данных:")
+    print(issues.head())
