@@ -15,5 +15,5 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-#project_files
+#project_files 
 issues.json
