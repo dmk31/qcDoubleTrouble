@@ -5,7 +5,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import pandas as pd
 from text_processor import clean_text
 
-def find_similar_issues(new_title: str, new_description: str, issues_df: pd.DataFrame, top_n: int = 5):
+def find_similar_issues(new_title: str, new_description: str, issues_df: pd.DataFrame, top_n: int = 7):
     """
     Находит задачи, похожие на новую, на основе анализа заголовков и описаний.
 
@@ -44,20 +44,21 @@ def find_similar_issues(new_title: str, new_description: str, issues_df: pd.Data
         })
         
     # 3. Поиск по Описаниям (description)
-    description_corpus = list(issues_df['cleaned_description']) + [cleaned_new_description]
-    
-    vectorizer_desc = TfidfVectorizer()
-    tfidf_desc = vectorizer_desc.fit_transform(description_corpus)
-    
-    cosine_sim_desc = cosine_similarity(tfidf_desc[-1], tfidf_desc[:-1])
-    
-    for i, similarity in enumerate(cosine_sim_desc[0]):
-        all_similarities.append({
-            'key': issues_df.iloc[i]['key'],
-            'summary': issues_df.iloc[i]['summary'],
-            'similarity': similarity,
-            'found_in': 'описанию'
-        })
+    if cleaned_new_description:
+        description_corpus = list(issues_df['cleaned_description']) + [cleaned_new_description]
+        
+        vectorizer_desc = TfidfVectorizer()
+        tfidf_desc = vectorizer_desc.fit_transform(description_corpus)
+        
+        cosine_sim_desc = cosine_similarity(tfidf_desc[-1], tfidf_desc[:-1])
+        
+        for i, similarity in enumerate(cosine_sim_desc[0]):
+            all_similarities.append({
+                'key': issues_df.iloc[i]['key'],
+                'summary': issues_df.iloc[i]['summary'],
+                'similarity': similarity,
+                'found_in': 'описанию'
+            })
 
     # 4. Объединение и сортировка результатов
     if not all_similarities:
@@ -80,7 +81,8 @@ def calculate_similarity(df, threshold=0.8):
     if 'full_text' not in df.columns or df.empty:
         return []
 
-    tfidf_vectorizer = TfidfVectorizer(stop_words='english') # Можно добавить русские стоп-слова
+    tfidf_vectorizer = TfidfVectorizer(stop_words='russian') # Можно добавить русские стоп-слова
+    # tfidf_vectorizer = TfidfVectorizer(stop_words='russian')
     tfidf_matrix = tfidf_vectorizer.fit_transform(df['full_text'])
 
     cosine_sim_matrix = cosine_similarity(tfidf_matrix)

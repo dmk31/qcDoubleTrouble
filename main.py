@@ -1,5 +1,7 @@
 import pandas as pd
 import sys
+import logging
+from logger_config import setup_logger
 from yandex_tracker import load_or_fetch_issues as load_issues
 from similarity_checker import find_similar_issues as find_issues
 
@@ -23,23 +25,19 @@ def interactive_main():
     """
     Основная функция для интерактивного поиска похожих задач в командной строке.
     """
-    # Конфигурация для корректного чтения ввода в PowerShell
-    if sys.platform == "win32":
-        sys.stdin.reconfigure(encoding='utf-8')
-        sys.stdout.reconfigure(encoding='utf-8')
-
-    print("Загрузка задач из Yandex.Tracker...")
+    setup_logger()
+    logging.info("Загрузка задач из Yandex.Tracker...")
     try:
         issues_df = load_issues()
-        print("Задачи успешно загружены.")
+        logging.info("Задачи успешно загружены.")
     except Exception as e:
-        print(f"Ошибка при загрузке задач: {e}")
+        logging.error(f"Ошибка при загрузке задач: {e}")
         return
 
     while True:
         try:
-            print("\nВведите данные новой задачи для поиска похожих.")
-            print("Для выхода введите 'exit' или 'quit'.")
+            logging.info("\nВведите данные новой задачи для поиска похожих.")
+            logging.info("Для выхода введите 'exit' или 'quit'.")
 
             title = input("Заголовок: ")
             if title.lower() in ['exit', 'quit']:
@@ -52,9 +50,9 @@ def interactive_main():
             similar_issues = find_similar_issues(title, description, issues_df)
 
             if similar_issues.empty:
-                print("\nПохожих задач не найдено.")
+                logging.info("\nПохожих задач не найдено.")
             else:
-                print("\nНайдены похожие задачи:")
+                logging.info("\nНайдены похожие задачи:")
                 # Создаем DataFrame для красивого вывода
                 results_df = pd.DataFrame(similar_issues)
                 results_df['similarity'] = results_df['similarity'].map(lambda x: f"{x:.2%}")
@@ -73,16 +71,16 @@ def interactive_main():
                     'summary': 'Название'
                 }, inplace=True)
 
-                print(results_df.to_string(index=False))
+                logging.info(results_df.to_string(index=False))
 
         except (ValueError, TypeError) as e:
-            print(f"Произошла ошибка: {e}")
-            print("Пожалуйста, попробуйте еще раз.")
+            logging.error(f"Произошла ошибка: {e}")
+            logging.info("Пожалуйста, попробуйте еще раз.")
 
 
 if __name__ == "__main__":
     try:
         interactive_main()
     except KeyboardInterrupt:
-        print("\nПрограмма завершена пользователем.")
+        logging.info("\nПрограмма завершена пользователем.")
         sys.exit(0)

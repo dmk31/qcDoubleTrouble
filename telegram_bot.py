@@ -2,17 +2,21 @@ import os
 import telebot
 import logging
 import re
+import json
 from telebot import types
 from telebot.handler_backends import State, StatesGroup
 from telebot.custom_filters import StateFilter
 from dotenv import load_dotenv
 from main import find_similar_issues, load_issues
 from yandex_tracker import force_fetch_issues, get_cache_update_time, get_issues_count_from_cache
+from logger_config import setup_logger
 
 load_dotenv()
 
+ALLOWED_USERS = {int(k): v for k, v in json.loads(os.getenv('ALLOWED_USERS')).items()}
+
 # Настройка логирования
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+setup_logger()
 
 TG_BOT_APIKEY = os.getenv('TG_BOT_APIKEY')
 
@@ -23,11 +27,6 @@ def escape_markdown(text):
     escape_chars = r'_*[]()~`>#+-=|{}.!'
     return re.sub(f'([{re.escape(escape_chars)}])', r'\\\1', text)
 
-ALLOWED_USERS = {
-    112444633: "Дмитрий",
-    730289007: "Андрей",
-    378606353: "Лилия"
-}
 
 def is_allowed(message):
     user_id = message.from_user.id
@@ -64,7 +63,7 @@ def request_search_text(message):
     user_id = message.from_user.id
     user_name = ALLOWED_USERS.get(user_id, "Неизвестный")
     logging.info(f"Пользователь {user_name} ({user_id}) нажал 'Поиск дублей'.")
-    bot.send_message(message.chat.id, "Отправьте заголовок и, по желанию, описание новой задачи для поиска.")
+    bot.send_message(message.chat.id, "Отправьте заголовок и, по желанию, описание новой задачи для поиска. Описание второй строкой через shift")
     bot.set_state(message.from_user.id, MyStates.search, message.chat.id)
 
 @bot.message_handler(state=MyStates.initial, func=lambda message: is_allowed(message) and message.text == 'Обновить БД принудительно')
