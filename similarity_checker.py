@@ -68,8 +68,8 @@ def find_similar_issues(new_title: str, new_description: str, issues_df: pd.Data
     # Удаление дубликатов по 'key', оставляя запись с наибольшим 'similarity'
     similar_issues_df = similar_issues_df.sort_values('similarity', ascending=False).drop_duplicates('key').reset_index(drop=True)
     
-    # Сортировка по убыванию 'similarity'
-    similar_issues_df = similar_issues_df.sort_values('similarity', ascending=False)
+    # Фильтрация задач с нулевой схожестью и сортировка
+    similar_issues_df = similar_issues_df[similar_issues_df['similarity'] > 0].sort_values('similarity', ascending=False)
     
     return similar_issues_df.head(top_n)
 
